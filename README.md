@@ -1,24 +1,31 @@
-Python 3.11.16
+# Camera Detector
 
-to ai agent：给出回复
-stage1:
-目标：
-打开电脑摄像头，持续读取图像并显示。
+一个使用 OpenCV 读取并显示电脑摄像头画面的练习项目。
 
-验收标准：
-1. 能打开摄像头
-2. 能读取每一帧
-3. 能显示视频
-4. 按 Q 可以退出
-5. 退出后正确释放摄像头资源
-6. 我能解释 frame 是什么
+## 环境
 
-stage2:
-创建独立的 Camera 模块，封装打开、读取与释放摄像头。
-让 main.py 只负责程序流程，不直接操作 cv2.VideoCapture。
-明确定义 read() 的返回值与读取失败行为。
-实时显示 FPS。
-按 S 保存当前帧。
-使用无效摄像头编号验证错误处理。
-保证任何退出情况下都能释放摄像头和关闭窗口。
-能解释 frame 的类型、形状、颜色通道及 Camera 接口契约。
+- Python 3.11.16
+- 依赖见 `requirements.txt`
+
+安装依赖：
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+## 运行
+
+```powershell
+python main.py
+```
+
+程序默认打开索引为 0 的摄像头。按 Q/q 或关闭画面窗口可以退出。
+
+当前代码已经包含基本采集、显示和资源清理流程，但仓库中尚无本版本的硬件运行验证记录。FPS 显示和保存当前帧仍是待实现目标。
+
+## 工程文档
+
+- [项目目标](ENGINEERING_LOG/goal.md)
+- [当前架构](ENGINEERING_LOG/architecture.md)
+- [2026-08-30：资源生命周期](ENGINEERING_LOG/2026-08-30.md)
+- [2026-08-31：Camera 抽象](ENGINEERING_LOG/2026-08-31.md)
