@@ -6,7 +6,7 @@
 
 | 模块 | 当前职责 |
 | --- | --- |
-| `main.py` | 程序入口、采集循环、画面显示、用户退出判断和窗口清理 |
+| `main.py` | 程序入口、采集循环、平均 FPS 统计与叠加、画面显示、用户退出判断和窗口清理 |
 | `camera.py` | 创建摄像头设备、报告打开状态、读取帧和释放设备 |
 | `cv2` | 提供底层摄像头访问与窗口 API |
 
@@ -28,10 +28,14 @@ main.py
   → Camera.read_frame()
   → (success, frame)
   → main.py
+  → 统计成功帧数并约每秒更新平均 FPS
+  → cv2.putText()
   → cv2.imshow()
 ```
 
 当 `success` 为 `False` 时，`main.py` 结束采集循环，不继续处理该帧。
+
+FPS 统计使用 `time.perf_counter()` 计算实际经过时间。`main.py` 在统计周期达到一秒后以“成功帧数 / 实际经过时间”更新显示值；`Camera` 不参与计时或文字绘制。
 
 ## 资源生命周期
 
