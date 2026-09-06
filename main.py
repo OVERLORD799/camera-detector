@@ -26,6 +26,7 @@ def main():
     previous_time = time.perf_counter()
     fps_num = 0
     fps = 0
+    i = 0
     #2检查摄像头有没有成功打开
     if my_camera.is_opened():
         print("It's on!")
@@ -60,6 +61,11 @@ def main():
                 key = cv2.waitKey(1)
                 if key == ord('q') or key == ord('Q'):
                     break
+                #按s键保存当前帧
+                if key == ord('s') or key == ord('S'):
+                    cv2.imwrite(f"frames/frame{i}.jpg", frame)
+                    print(f"Saved frame{i}.jpg")
+                    i += 1
                 #检查用户是否点右上角x键退出
                 try:
                     visible = cv2.getWindowProperty("camera", cv2.WND_PROP_AUTOSIZE)
