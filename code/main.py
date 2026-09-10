@@ -1,24 +1,9 @@
 import cv2
-import camera
+import camera as camera
 import time
+import fps_module as fps_module
+import save_module as save_module
 
-#计算fps
-def calculate_fps(previous_time, fps_num) -> tuple[float, float, int]:
-    #获取当前时间
-    current_time = time.perf_counter()
-    #帧数+1
-    fps_num += 1
-    #判断是否过了一秒
-    if current_time - previous_time >= 1:
-        
-        #如果过了一秒，输出平均fps并重置fps_num和previous_time
-        fps = fps_num / (current_time - previous_time)
-        fps_num = 0
-        previous_time = current_time
-        return fps, previous_time,fps_num
-    else:
-        #如果没有，返回
-        return 0, previous_time, fps_num
 
 def main():
     #1创建摄像头对象
@@ -42,7 +27,7 @@ def main():
                     break
                 #显示帧
                 
-                tfps, previous_time, fps_num = calculate_fps(previous_time, fps_num)
+                tfps, previous_time, fps_num = fps_module.calculate_fps(previous_time, fps_num)
 
                 fps = tfps if tfps != 0 else fps
                 cv2.putText(
@@ -63,9 +48,7 @@ def main():
                     break
                 #按s键保存当前帧
                 if key == ord('s') or key == ord('S'):
-                    cv2.imwrite(f"frames/frame{i}.jpg", frame)
-                    print(f"Saved frame{i}.jpg")
-                    i += 1
+                    i = save_module.save_frame(frame, i)
                 #检查用户是否点右上角x键退出
                 try:
                     visible = cv2.getWindowProperty("camera", cv2.WND_PROP_AUTOSIZE)
