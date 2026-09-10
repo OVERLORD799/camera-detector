@@ -34,7 +34,7 @@ class FPSCounter:
                         (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.8,
-                        (0, 255, 0),
+                        (100, 255, 100),
                         2,
                         cv2.LINE_AA
                     )

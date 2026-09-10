@@ -9,7 +9,7 @@
 | `code/main.py` | 程序入口、采集循环、画面显示、用户输入和资源清理 |
 | `code/camera.py` | 创建摄像头设备、报告打开状态、读取帧和释放设备 |
 | `code/fps_module.py` | `FPSCounter` 保存计时、帧计数和最新 FPS 状态，计算约一秒周期的平均 FPS 并将其绘制到帧 |
-| `code/processor.py` | 接收 BGR 帧，将其转换为单通道灰度图并返回 |
+| `code/FrameProcessor.py` | `Processor` 接收 BGR 帧，提供灰度转换与“灰度 → 高斯模糊 → Canny”边缘检测 |
 | `code/save_module.py` | `FrameSaver` 保存文件序号，将已处理的帧写入 JPEG |
 | `cv2` | 提供底层摄像头访问与窗口 API |
 
@@ -20,12 +20,12 @@ code/main.py
   ├─> camera.Camera
   │     └─> cv2.VideoCapture
   ├─> fps_module.FPSCounter
-  ├─> processor.grey
+  ├─> FrameProcessor.Processor
   ├─> save_module.FrameSaver
   └─> cv2 window APIs
 ```
 
-`code/main.py` 不直接操作 `cv2.VideoCapture`、`cv2.cvtColor()`、`cv2.putText()` 或 `cv2.imwrite()`。`code/camera.py` 不负责显示画面或处理键盘输入。灰度转换由 `processor` 完成，FPS 文字的计算与绘制由 `FPSCounter` 完成，帧保存由 `FrameSaver` 完成。
+`code/main.py` 不直接操作 `cv2.VideoCapture`、`cv2.cvtColor()`、`cv2.GaussianBlur()`、`cv2.Canny()`、`cv2.putText()` 或 `cv2.imwrite()`。`code/camera.py` 不负责显示画面或处理键盘输入。图像处理由 `Processor` 完成，FPS 文字的计算与绘制由 `FPSCounter` 完成，帧保存由 `FrameSaver` 完成。
 
 ## 数据流
 
@@ -34,8 +34,10 @@ code/main.py
   → Camera.read_frame()
   → (success, frame)
   → code/main.py
-  → processor.grey()
+  → Processor.edges_detector()
       → cv2.cvtColor(..., COLOR_BGR2GRAY)
+      → cv2.GaussianBlur(..., (5, 5), 0)
+      → cv2.Canny(..., 100, 200)
   → FPSCounter.show_fps()
       → calculate_fps()
       → cv2.putText()
@@ -46,11 +48,11 @@ code/main.py
 
 当 `success` 为 `False` 时，`main.py` 结束采集循环，不继续处理该帧。
 
-读取成功后，`processor.grey()` 先将 BGR 帧转为灰度图，后续 FPS 绘制、显示和保存都使用这张处理后的帧。`FPSCounter` 使用 `time.perf_counter()` 计算实际经过时间，在内部保存统计周期起点、帧数和最新 FPS，并通过 `show_fps()` 将结果绘制到传入的帧。
+读取成功后，`Processor.edges_detector()` 先将 BGR 帧转为灰度图，使用 5×5 高斯核平滑小尺度噪声，再以低/高阈值 100/200 产生单通道 Canny 边缘图。后续 FPS 绘制、显示和保存都使用这张处理后的帧。
 
 ## 资源生命周期
 
-1. `code/main.py` 创建 `Camera(0)`、`FPSCounter()` 和 `FrameSaver()`。
+1. `code/main.py` 创建 `Camera(0)`、`FPSCounter()`、`FrameSaver()` 和 `Processor()`。
 2. `is_opened()` 决定是否进入采集循环。
 3. 采集循环位于 `try` 中。
 4. `finally` 负责调用 `Camera.release()` 和 `cv2.destroyAllWindows()`。
@@ -66,4 +68,4 @@ code/main.py
 
 ## 验证状态
 
-当前结构已通过静态检查。可控主循环回归测试确认处理器的输出是二维灰度帧，并覆盖了显示、保存后 Q 退出、窗口关闭、读取失败、摄像头释放和窗口清理。真实摄像头运行 30 帧时，所有传给 `imshow()` 的图像均为 `(480, 640)` 灰度帧，程序通过 Q 路径退出并调用了摄像头释放。所有断言通过，仓库仍没有保存自动化测试。
+当前结构已通过静态检查。实际摄像头产物已确认为 640×480 单通道边缘图。可控主循环回归测试覆盖了边缘图显示与保存、Q 退出、窗口关闭、读取失败、摄像头释放和窗口清理。单通道图上的 FPS 文字也已修复并通过像素变化验证。用户已说明模糊核与 Canny 双阈值变化对噪声和细节的影响。仓库仍没有保存自动化测试。

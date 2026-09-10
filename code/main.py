@@ -2,7 +2,7 @@ import cv2
 import camera as camera
 import fps_module as fps_module
 import save_module as save_module
-import processor 
+import FrameProcessor
 
 
 def main():
@@ -11,7 +11,8 @@ def main():
     my_camera = camera.Camera(0)
     fps_counter= fps_module.FPSCounter()
     frame_saver = save_module.FrameSaver()
-    frame_type = "gray"  
+    processor = FrameProcessor.Processor()
+    frame_type = "edges"  
 
     #2检查摄像头有没有成功打开
     if my_camera.is_opened():
@@ -30,6 +31,8 @@ def main():
                 #处理图像
                 if frame_type == "gray":
                     frame = processor.grey(frame)
+                elif frame_type == "edges":
+                    frame = processor.edges_detector(frame)
 
 
                 #显示帧
@@ -46,7 +49,7 @@ def main():
 
                 #按s键保存当前帧
                 if key == ord('s') or key == ord('S'):
-                    frame_saver.save_frame(frame, frame_type)
+                    frame_saver.save_frame(frame)
 
 
                 #检查用户是否点右上角x键退出

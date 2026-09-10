@@ -28,3 +28,4 @@ Goal 只有在实现存在、请求的行为有效且必要验证完成后才能
 | 理解并实现最简单的单帧图像处理 | Completed | 实际验证确认 BGR 帧经 `cv2.cvtColor()` 转换后由 `(H, W, 3)` 变为 `(H, W)`，保持 `uint8`，灰度 JPEG 可正常读取；见 [日志](2026-09-10.md) |
 | 将 FPS 与当前帧保存职责从 `main.py` 分离 | Completed | `FPSCounter` 封装 FPS 状态、计算与绘制，`FrameSaver` 封装帧保存状态与行为；可控回归测试已通过；见 [日志](2026-09-10.md) |
 | 将图像处理职责从 `main.py` 分离 | Completed | `processor.py` 接收 BGR `ndarray` 并返回灰度图，`main.py` 只调用处理接口；真实摄像头灰度预览与退出/清理回归验证已通过；见 [日志](2026-09-10-processor.md) |
+| 实现并理解最基础的边缘检测流程 | Completed | 已实现 `BGR → Gray → Gaussian Blur → Canny Edge` 并显示/保存实际边缘图；参数影响与双阈值行为已理解，退出和资源释放回归验证已通过；见 [日志](2026-09-10-edge.md) |
