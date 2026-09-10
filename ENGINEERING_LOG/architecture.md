@@ -6,20 +6,24 @@
 
 | 模块 | 当前职责 |
 | --- | --- |
-| `main.py` | 程序入口、采集循环、平均 FPS 统计与叠加、画面显示、当前帧保存、用户退出判断和窗口清理 |
-| `camera.py` | 创建摄像头设备、报告打开状态、读取帧和释放设备 |
+| `code/main.py` | 程序入口、采集循环、画面显示、用户输入和资源清理 |
+| `code/camera.py` | 创建摄像头设备、报告打开状态、读取帧和释放设备 |
+| `code/fps_module.py` | `FPSCounter` 保存计时、帧计数和最新 FPS 状态，计算约一秒周期的平均 FPS 并将其绘制到帧 |
+| `code/save_module.py` | `FrameSaver` 保存文件序号，将帧转为灰度图并写入 JPEG |
 | `cv2` | 提供底层摄像头访问与窗口 API |
 
 ## 依赖关系
 
 ```text
-main.py
+code/main.py
   ├─> camera.Camera
   │     └─> cv2.VideoCapture
+  ├─> fps_module.FPSCounter
+  ├─> save_module.FrameSaver
   └─> cv2 window APIs
 ```
 
-`main.py` 不直接操作 `cv2.VideoCapture`。`camera.py` 不负责显示画面或处理键盘输入。
+`code/main.py` 不直接操作 `cv2.VideoCapture`、`cv2.putText()` 或 `cv2.imwrite()`。`code/camera.py` 不负责显示画面或处理键盘输入。FPS 文字的计算与绘制由 `FPSCounter` 完成，帧保存由 `FrameSaver` 完成。
 
 ## 数据流
 
@@ -27,26 +31,29 @@ main.py
 摄像头
   → Camera.read_frame()
   → (success, frame)
-  → main.py
-  → 统计成功帧数并约每秒更新平均 FPS
-  → cv2.putText()
+  → code/main.py
+  → FPSCounter.show_fps()
+      → calculate_fps()
+      → cv2.putText()
   → cv2.imshow()
-  → S/s 按键触发 cv2.imwrite()
+  → S/s 按键触发 FrameSaver.save_frame()
+  → cv2.cvtColor(..., COLOR_BGR2GRAY)
+  → cv2.imwrite()
 ```
 
 当 `success` 为 `False` 时，`main.py` 结束采集循环，不继续处理该帧。
 
-FPS 统计使用 `time.perf_counter()` 计算实际经过时间。`main.py` 在统计周期达到一秒后以“成功帧数 / 实际经过时间”更新显示值；`Camera` 不参与计时或文字绘制。S/s 保存发生在文字绘制之后，因此生成的 JPEG 包含 FPS 文字。
+`FPSCounter` 使用 `time.perf_counter()` 计算实际经过时间，在内部保存统计周期起点、帧数和最新 FPS，并通过 `show_fps()` 将结果绘制到传入的帧。S/s 保存发生在 FPS 文字绘制之后；`FrameSaver` 再将该 BGR 帧转为灰度图，因此生成的 JPEG 是带 FPS 文字的单通道图像。
 
 ## 资源生命周期
 
-1. `main.py` 创建 `Camera(0)`。
+1. `code/main.py` 创建 `Camera(0)`、`FPSCounter()` 和 `FrameSaver()`。
 2. `is_opened()` 决定是否进入采集循环。
 3. 采集循环位于 `try` 中。
 4. `finally` 负责调用 `Camera.release()` 和 `cv2.destroyAllWindows()`。
 5. 摄像头打开失败时，程序释放设备对象后退出。
 
-摄像头由 `Camera` 管理，显示窗口由 `main.py` 管理。
+摄像头由 `Camera` 管理，显示窗口由 `code/main.py` 管理。
 
 ## 错误边界
 
@@ -56,4 +63,4 @@ FPS 统计使用 `time.perf_counter()` 计算实际经过时间。`main.py` 在�
 
 ## 验证状态
 
-当前结构已通过静态检查。实际运行已确认设备能打开并持续显示画面，Q/q 与窗口关闭均能退出并释放资源。保存的摄像头帧可以正常解码，并显示了会更新的 FPS 文字。无效设备索引和可控读取失败也已验证程序会退出并释放资源。仓库仍没有保存自动化测试。
+当前结构已通过静态检查。可控计时验证了 `FPSCounter` 保留状态、按周期计算平均 FPS、重置帧计数并修改传入帧。`FrameSaver` 已验证可以连续写入两张灰度图并保留递增序号。可控主循环回归测试覆盖了显示、保存后 Q 退出、窗口关闭、读取失败、摄像头释放和窗口清理，所有断言通过。仓库仍没有保存自动化测试。
