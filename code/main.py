@@ -2,6 +2,7 @@ import cv2
 import camera as camera
 import fps_module as fps_module
 import save_module as save_module
+import processor 
 
 
 def main():
@@ -25,6 +26,10 @@ def main():
                 #如果读取失败，退出
                 if not success:
                     break
+
+                #处理图像
+                if frame_type == "gray":
+                    frame = processor.grey(frame)
 
 
                 #显示帧
@@ -52,7 +57,7 @@ def main():
                     
                 if visible   < 0:
                     break
-                
+
         finally:
 
                 #释放摄像头
